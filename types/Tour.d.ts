@@ -1,6 +1,6 @@
 import { Instance as PopperInstance } from '@popperjs/core';
 import { BoxOverlay } from '@spbweb/box-overlay';
-export declare type TourStepRenderParams<T> = {
+export declare type TourStepRenderParams<D, T> = {
     root: Element;
     next: () => Promise<void>;
     prev: () => Promise<void>;
@@ -8,16 +8,18 @@ export declare type TourStepRenderParams<T> = {
     isFirst: boolean;
     isLast: boolean;
     isFirstRender: boolean;
-    data: T;
+    data: D;
+    steps: T;
+    stepIndex: number;
 };
 export declare type TourStepBeforeParams<T> = {
     step: T;
     popper: PopperInstance;
 };
 export declare type TourStepBefore<T> = (params: TourStepBeforeParams<T>) => Promise<void>;
-export declare type TourStepRender<T> = (params: TourStepRenderParams<T>) => void;
+export declare type TourStepRender<D, T> = (params: TourStepRenderParams<D, T>) => void;
 export interface TourStep<T> {
-    render?: TourStepRender<any>;
+    render?: TourStepRender<this['data'], any[]>;
     before?: TourStepBefore<this>;
     elements: (string | Element)[];
     data: T;
@@ -37,7 +39,7 @@ export declare class Tour {
     add<T>(step: TourStep<T>): void;
     remove(step: TourStep<any>): void;
     clear(): void;
-    start(): Promise<void>;
+    start(stepIndex?: number): Promise<void>;
     stop(): Promise<void>;
     private appendPopper;
     private removePopper;

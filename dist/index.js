@@ -33,11 +33,21 @@ const defaultRender = ({ root, next, prev, stop, isFirst, isLast, isFirstRender,
         const content = root.querySelector('.tour-content-text');
         if (prevButton instanceof HTMLElement) {
             prevButton.onclick = prev;
-            prevButton.setAttribute('disabled', isFirst ? 'disabled' : 'none');
+            if (isFirst) {
+                prevButton.setAttribute('disabled', 'disabled');
+            }
+            else {
+                prevButton.removeAttribute('disabled');
+            }
         }
         if (nextButton instanceof HTMLElement) {
             nextButton.onclick = next;
-            nextButton.setAttribute('disabled', isLast ? 'disabled' : 'none');
+            if (isLast) {
+                nextButton.setAttribute('disabled', 'disabled');
+            }
+            else {
+                nextButton.removeAttribute('disabled');
+            }
         }
         if (content instanceof HTMLElement) {
             content.innerHTML = data.toString();
@@ -90,7 +100,6 @@ class Tour {
             this.popperInstance.forceUpdate();
         };
         this.box = new BoxOverlay(this.handleUpdateRect);
-        this.popperElement.style.setProperty('z-index', '111111111');
     }
     isStarted() {
         return this.started;
@@ -104,19 +113,31 @@ class Tour {
     clear() {
         this.steps = [];
     }
-    start() {
+    start(stepIndex = 0) {
         return __awaiter(this, void 0, void 0, function* () {
+            if (this.started) {
+                console.warn('[UiTour]: tour already started');
+                return;
+            }
             this.isFirstRender = true;
+            this.started = true;
             this.appendPopper();
             this.box.start();
-            yield this.goToStep(0);
+            yield this.goToStep(stepIndex);
         });
     }
     stop() {
         return __awaiter(this, void 0, void 0, function* () {
+            if (!this.started) {
+                console.warn('[UiTour]: tour already stoped');
+                return;
+            }
+            this.started = false;
             yield this.goToStepPromise;
+            this.popperElement.innerHTML = '';
             this.removePopper();
             this.box.stop();
+            this.box.clear();
         });
     }
     appendPopper() {
@@ -136,23 +157,38 @@ class Tour {
         document.body.appendChild(this.popperElement);
     }
     removePopper() {
-        const { popperInstance } = this;
+        const { popperInstance, popperElement } = this;
+        const { body } = document;
         if (popperInstance) {
             popperInstance.destroy();
+        }
+        if (popperElement.parentElement === body) {
+            body.removeChild(popperElement);
         }
     }
     getPopperOptions(step) {
         return Object.assign({}, step.popperOptions || {});
     }
     goToStep(stepIndex) {
+        const { steps } = this;
+        const { length } = steps;
+        // Check step index [BEGIN]
+        if (stepIndex < 0 || stepIndex >= length) {
+            throw new Error('[UiTour]: stepIndex go outside the range of the steps array'
+                + `\n steps length is ${length}; stepIndex is ${stepIndex}`);
+        }
+        // Check step index [END]
         this.goToStepPromise = (() => __awaiter(this, void 0, void 0, function* () {
             try {
+                // Waiting for the previous step to complete
+                yield this.goToStepPromise;
                 this.currentStepIndex = stepIndex;
-                const step = this.steps[stepIndex];
+                const step = steps[stepIndex];
                 const { popperInstance: popper } = this;
                 if (!popper) {
                     throw new Error('this.popperInstance is nil');
                 }
+                // Call steps middleware
                 if (step.before) {
                     yield step.before({
                         step,
@@ -161,10 +197,15 @@ class Tour {
                 }
                 const render = step.render ? step.render : defaultRender;
                 popper.setOptions(this.getPopperOptions(step));
+                // Render popup content
                 render({
                     root: this.popperElement,
                     isFirst: stepIndex === 0,
                     isLast: stepIndex === this.steps.length - 1,
+                    isFirstRender: this.isFirstRender,
+                    data: step.data,
+                    steps,
+                    stepIndex,
                     next: () => __awaiter(this, void 0, void 0, function* () {
                         this.currentStepIndex = stepIndex + 1;
                         yield this.goToStep(this.currentStepIndex);
@@ -174,8 +215,6 @@ class Tour {
                         yield this.goToStep(this.currentStepIndex);
                     }),
                     stop: () => this.stop(),
-                    isFirstRender: this.isFirstRender,
-                    data: step.data,
                 });
                 this.isFirstRender = false;
                 popper.forceUpdate();
