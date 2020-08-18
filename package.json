@@ -1,0 +1,26 @@
+{
+  "name": "@spbweb/ui-tour",
+  "version": "0.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "typings": "types/index",
+  "scripts": {
+    "build": "rollup --config rollup.config.js",
+    "build-demo": "rollup --config rollup.demo.config.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@popperjs/core": "^2.4.4",
+    "@spbweb/box-overlay": "git+https://github.com/spb-web/boxOverlay.git"
+  },
+  "devDependencies": {
+    "@rollup/plugin-replace": "^2.3.3",
+    "@rollup/plugin-typescript": "^5.0.2",
+    "rollup": "^2.26.3",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "tslib": "^2.0.1",
+    "typescript": "^3.9.7"
+  }
+}
