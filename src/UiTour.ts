@@ -43,21 +43,39 @@ export interface TourStep<T> {
   popperOptions?:Parameters<PopperInstance['setOptions']>[0]
 }
 
+interface UiTourConstructorOptions {
+  render?:(payload:TourPopperRender) => void,
+  popperOptions?:Parameters<PopperInstance['setOptions']>[0],
+  onStop?:() => void,
+  steps?:TourStep<any>[]
+}
+
 export class UiTour {
   public box:BoxOverlay
   private steps:TourStep<any>[] = []
   private currentStepIndex = 0
   private popperElement = document.createElement('div')
   private popperInstance:ReturnType<typeof createPopper>|null = null
+  private popperOptions:Parameters<PopperInstance['setOptions']>[0] = {}
   private isFirstRender = true
   private goToStepPromise = Promise.resolve()
   private started = false
   private render:(payload:TourPopperRender) => void = () => {}
-  private popperOptions:Parameters<PopperInstance['setOptions']>[0] = {}
   private handleStop:() => void = () => {}
 
-  constructor() {
+  constructor({
+    render = () => {},
+    popperOptions = {},
+    onStop = () => {},
+    steps = [],
+  }:UiTourConstructorOptions = {}) {
     this.box = new BoxOverlay(this.handleUpdateRect)
+
+    this.setRender(render)
+    this.setPopperOptions(popperOptions)
+    this.onStop(onStop)
+
+    steps.forEach(step => this.add(step))
   }
 
   public isStarted() {

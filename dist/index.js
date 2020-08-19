@@ -27,16 +27,16 @@ function __awaiter(thisArg, _arguments, P, generator) {
 }
 
 class UiTour {
-    constructor() {
+    constructor({ render = () => { }, popperOptions = {}, onStop = () => { }, steps = [], } = {}) {
         this.steps = [];
         this.currentStepIndex = 0;
         this.popperElement = document.createElement('div');
         this.popperInstance = null;
+        this.popperOptions = {};
         this.isFirstRender = true;
         this.goToStepPromise = Promise.resolve();
         this.started = false;
         this.render = () => { };
-        this.popperOptions = {};
         this.handleStop = () => { };
         this.handleUpdateRect = () => {
             if (!this.popperInstance) {
@@ -45,6 +45,10 @@ class UiTour {
             this.popperInstance.forceUpdate();
         };
         this.box = new BoxOverlay(this.handleUpdateRect);
+        this.setRender(render);
+        this.setPopperOptions(popperOptions);
+        this.onStop(onStop);
+        steps.forEach(step => this.add(step));
     }
     isStarted() {
         return this.started;

@@ -1931,17 +1931,18 @@
     }
 
     var UiTour = /** @class */ (function () {
-        function UiTour() {
+        function UiTour(_a) {
             var _this = this;
+            var _b = _a === void 0 ? {} : _a, _c = _b.render, render = _c === void 0 ? function () { } : _c, _d = _b.popperOptions, popperOptions = _d === void 0 ? {} : _d, _e = _b.onStop, onStop = _e === void 0 ? function () { } : _e, _f = _b.steps, steps = _f === void 0 ? [] : _f;
             this.steps = [];
             this.currentStepIndex = 0;
             this.popperElement = document.createElement('div');
             this.popperInstance = null;
+            this.popperOptions = {};
             this.isFirstRender = true;
             this.goToStepPromise = Promise.resolve();
             this.started = false;
             this.render = function () { };
-            this.popperOptions = {};
             this.handleStop = function () { };
             this.handleUpdateRect = function () {
                 if (!_this.popperInstance) {
@@ -1950,6 +1951,10 @@
                 _this.popperInstance.forceUpdate();
             };
             this.box = new BoxOverlay(this.handleUpdateRect);
+            this.setRender(render);
+            this.setPopperOptions(popperOptions);
+            this.onStop(onStop);
+            steps.forEach(function (step) { return _this.add(step); });
         }
         UiTour.prototype.isStarted = function () {
             return this.started;
