@@ -1,26 +1,26 @@
 import { Instance as PopperInstance } from '@popperjs/core';
 import { BoxOverlay } from '@spbweb/box-overlay';
-export declare type TourStepRenderParams<D, T> = {
+export interface TourPopperRender {
     root: Element;
+    popper: PopperInstance;
+}
+export interface TourStepRenderParams<Steps extends TourStep<any>[], Step extends TourStep<any>> extends TourPopperRender {
     next: () => Promise<void>;
     prev: () => Promise<void>;
     stop: () => Promise<void>;
     isFirst: boolean;
     isLast: boolean;
     isFirstRender: boolean;
-    data: D;
-    steps: T;
+    data: Step['data'];
+    steps: Steps;
     stepIndex: number;
-};
-export declare type TourStepBeforeParams<T> = {
-    step: T;
-    popper: PopperInstance;
-};
-export declare type TourStepBefore<T> = (params: TourStepBeforeParams<T>) => Promise<void>;
-export declare type TourStepRender<D, T> = (params: TourStepRenderParams<D, T>) => void;
+    step: Step;
+}
+export declare type TourStepBefore<Steps extends TourStep<any>[], Step extends TourStep<any>> = (params: TourStepRenderParams<Steps, Step>) => Promise<void>;
+export declare type TourStepRender<Steps extends TourStep<any>[], Step extends TourStep<any>> = (params: TourStepRenderParams<Steps, Step>) => void;
 export interface TourStep<T> {
-    render?: TourStepRender<this['data'], any[]>;
-    before?: TourStepBefore<this>;
+    render?: TourStepRender<TourStep<any>[], this>;
+    before?: TourStepBefore<TourStep<any>[], this>;
     elements: (string | Element)[];
     data: T;
     popperOptions?: Parameters<PopperInstance['setOptions']>[0];
@@ -34,11 +34,13 @@ export declare class Tour {
     private isFirstRender;
     private goToStepPromise;
     private started;
+    private render;
     constructor();
     isStarted(): boolean;
     add<T>(step: TourStep<T>): void;
     remove(step: TourStep<any>): void;
     clear(): void;
+    setRender(render: (payload: TourPopperRender) => void): void;
     start(stepIndex?: number): Promise<void>;
     stop(): Promise<void>;
     private appendPopper;

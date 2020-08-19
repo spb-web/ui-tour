@@ -1930,65 +1930,6 @@
         }
     }
 
-    var defaultRender = function (_a) {
-        var root = _a.root, next = _a.next, prev = _a.prev, stop = _a.stop, isFirst = _a.isFirst, isLast = _a.isLast, isFirstRender = _a.isFirstRender, data = _a.data;
-        if (!isFirstRender) {
-            var nextButton_1 = root.querySelector('.tour-next-button');
-            var prevButton_1 = root.querySelector('.tour-prev-button');
-            var content_1 = root.querySelector('.tour-content-text');
-            if (prevButton_1 instanceof HTMLElement) {
-                prevButton_1.onclick = prev;
-                if (isFirst) {
-                    prevButton_1.setAttribute('disabled', 'disabled');
-                }
-                else {
-                    prevButton_1.removeAttribute('disabled');
-                }
-            }
-            if (nextButton_1 instanceof HTMLElement) {
-                nextButton_1.onclick = next;
-                if (isLast) {
-                    nextButton_1.setAttribute('disabled', 'disabled');
-                }
-                else {
-                    nextButton_1.removeAttribute('disabled');
-                }
-            }
-            if (content_1 instanceof HTMLElement) {
-                content_1.innerHTML = data.toString();
-            }
-            return;
-        }
-        var nextButton = document.createElement('button');
-        nextButton.innerText = 'Next';
-        nextButton.classList.add('tour-next-button');
-        if (isLast) {
-            nextButton.setAttribute('disabled', 'disabled');
-        }
-        else {
-            nextButton.onclick = function () { return next(); };
-        }
-        var prevButton = document.createElement('button');
-        prevButton.innerText = 'Prev';
-        prevButton.classList.add('tour-prev-button');
-        if (isFirst) {
-            prevButton.setAttribute('disabled', 'disabled');
-        }
-        else {
-            prevButton.onclick = function () { return prev(); };
-        }
-        var stopButton = document.createElement('button');
-        stopButton.innerText = 'stop';
-        stopButton.onclick = stop;
-        var content = document.createElement('div');
-        content.classList.add('tour-content-text');
-        content.innerText = data.toString();
-        root.appendChild(content);
-        root.appendChild(stopButton);
-        root.appendChild(nextButton);
-        root.appendChild(prevButton);
-    };
-
     var Tour = /** @class */ (function () {
         function Tour() {
             var _this = this;
@@ -1999,6 +1940,7 @@
             this.isFirstRender = true;
             this.goToStepPromise = Promise.resolve();
             this.started = false;
+            this.render = function () { };
             this.handleUpdateRect = function () {
                 if (!_this.popperInstance) {
                     throw new Error('popperInstance is nil');
@@ -2006,7 +1948,6 @@
                 _this.popperInstance.forceUpdate();
             };
             this.box = new BoxOverlay(this.handleUpdateRect);
-            this.popperElement.style.setProperty('z-index', '111111111');
         }
         Tour.prototype.isStarted = function () {
             return this.started;
@@ -2020,8 +1961,13 @@
         Tour.prototype.clear = function () {
             this.steps = [];
         };
-        Tour.prototype.start = function () {
+        Tour.prototype.setRender = function (render) {
+            this.render = render;
+        };
+        Tour.prototype.start = function (stepIndex) {
+            if (stepIndex === void 0) { stepIndex = 0; }
             return __awaiter(this, void 0, void 0, function () {
+                var popperInstance;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -2032,8 +1978,16 @@
                             this.isFirstRender = true;
                             this.started = true;
                             this.appendPopper();
+                            popperInstance = this.popperInstance;
+                            if (!popperInstance) {
+                                throw new Error('popperInstance is nil');
+                            }
                             this.box.start();
-                            return [4 /*yield*/, this.goToStep(0)];
+                            this.render({
+                                root: this.popperElement,
+                                popper: popperInstance,
+                            });
+                            return [4 /*yield*/, this.goToStep(stepIndex)];
                         case 1:
                             _a.sent();
                             return [2 /*return*/];
@@ -2095,34 +2049,42 @@
         };
         Tour.prototype.goToStep = function (stepIndex) {
             var _this = this;
+            var steps = this.steps;
+            var length = steps.length;
+            // Check step index [BEGIN]
+            if (stepIndex < 0 || stepIndex >= length) {
+                throw new Error('[UiTour]: stepIndex go outside the range of the steps array'
+                    + ("\n steps length is " + length + "; stepIndex is " + stepIndex));
+            }
+            // Check step index [END]
             this.goToStepPromise = (function () { return __awaiter(_this, void 0, void 0, function () {
-                var step, popper, render, error_1;
+                var step, popper, tourStepRenderParams, render, error_1;
                 var _this = this;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            _a.trys.push([0, 3, , 4]);
+                            _a.trys.push([0, 4, , 5]);
+                            // Waiting for the previous step to complete
+                            return [4 /*yield*/, this.goToStepPromise];
+                        case 1:
+                            // Waiting for the previous step to complete
+                            _a.sent();
                             this.currentStepIndex = stepIndex;
-                            step = this.steps[stepIndex];
+                            step = steps[stepIndex];
                             popper = this.popperInstance;
                             if (!popper) {
                                 throw new Error('this.popperInstance is nil');
                             }
-                            if (!step.before) return [3 /*break*/, 2];
-                            return [4 /*yield*/, step.before({
-                                    step: step,
-                                    popper: popper
-                                })];
-                        case 1:
-                            _a.sent();
-                            _a.label = 2;
-                        case 2:
-                            render = step.render ? step.render : defaultRender;
-                            popper.setOptions(this.getPopperOptions(step));
-                            render({
+                            tourStepRenderParams = {
                                 root: this.popperElement,
                                 isFirst: stepIndex === 0,
                                 isLast: stepIndex === this.steps.length - 1,
+                                isFirstRender: this.isFirstRender,
+                                data: step.data,
+                                step: step,
+                                steps: steps,
+                                stepIndex: stepIndex,
+                                popper: popper,
                                 next: function () { return __awaiter(_this, void 0, void 0, function () {
                                     return __generator(this, function (_a) {
                                         switch (_a.label) {
@@ -2148,19 +2110,27 @@
                                     });
                                 }); },
                                 stop: function () { return _this.stop(); },
-                                isFirstRender: this.isFirstRender,
-                                data: step.data,
-                            });
+                            };
+                            if (!step.before) return [3 /*break*/, 3];
+                            return [4 /*yield*/, step.before(tourStepRenderParams)];
+                        case 2:
+                            _a.sent();
+                            _a.label = 3;
+                        case 3:
+                            render = step.render ? step.render : function () { };
+                            popper.setOptions(this.getPopperOptions(step));
+                            // Render popup content
+                            render(tourStepRenderParams);
                             this.isFirstRender = false;
                             popper.forceUpdate();
                             this.box.clear();
                             step.elements.forEach(function (element) { return _this.box.add(element); });
-                            return [3 /*break*/, 4];
-                        case 3:
+                            return [3 /*break*/, 5];
+                        case 4:
                             error_1 = _a.sent();
                             console.error(error_1);
-                            return [3 /*break*/, 4];
-                        case 4: return [2 /*return*/];
+                            return [3 /*break*/, 5];
+                        case 5: return [2 /*return*/];
                     }
                 });
             }); })();

@@ -1,32 +1,35 @@
 import { createPopper, Instance as PopperInstance } from '@popperjs/core'
 import { BoxOverlay } from '@spbweb/box-overlay'
-import { defaultRender } from './utils'
 
-export type TourStepRenderParams<D, T> = {
+export interface TourPopperRender {
   root:Element,
+  popper:PopperInstance,
+}
+
+export interface TourStepRenderParams<Steps extends TourStep<any>[], Step extends TourStep<any>>
+  extends TourPopperRender
+{
   next:() => Promise<void>,
   prev:() => Promise<void>,
   stop:() => Promise<void>
   isFirst: boolean,
   isLast: boolean,
   isFirstRender: boolean,
-  data:D,
-  steps:T,
+  data:Step['data'],
+  steps:Steps,
   stepIndex:number,
+  step:Step,
 }
 
-export type TourStepBeforeParams<T> = {
-  step:T,
-  popper:PopperInstance,
-}
+export type TourStepBefore<Steps extends TourStep<any>[], Step extends TourStep<any>> = (
+  params:TourStepRenderParams<Steps, Step>
+) => Promise<void>
 
-export type TourStepBefore<T> = (params:TourStepBeforeParams<T>) => Promise<void>
-
-export type TourStepRender<D,T> = (params:TourStepRenderParams<D,T>) => void
+export type TourStepRender<Steps extends TourStep<any>[], Step extends TourStep<any>> = (params:TourStepRenderParams<Steps,Step>) => void
 
 export interface TourStep<T> {
-  render?:TourStepRender<this['data'], any[]>
-  before?:TourStepBefore<this>
+  render?:TourStepRender<TourStep<any>[], this>
+  before?:TourStepBefore<TourStep<any>[], this>
   elements:(string|Element)[]
   data:T
   popperOptions?:Parameters<PopperInstance['setOptions']>[0]
@@ -41,6 +44,7 @@ export class Tour {
   private isFirstRender = true
   private goToStepPromise = Promise.resolve()
   private started = false
+  private render:(payload:TourPopperRender) => void = () => {}
 
   constructor() {
     this.box = new BoxOverlay(this.handleUpdateRect)
@@ -62,6 +66,10 @@ export class Tour {
     this.steps = []
   }
 
+  public setRender(render:(payload:TourPopperRender) => void) {
+    this.render = render
+  }
+
   public async start(stepIndex = 0) {
     if (this.started) {
       console.warn('[UiTour]: tour already started')
@@ -72,7 +80,18 @@ export class Tour {
     this.started = true
 
     this.appendPopper()
+
+    const { popperInstance } = this
+
+    if (!popperInstance) {
+      throw new Error('popperInstance is nil')
+    }
+
     this.box.start()
+    this.render({
+      root: this.popperElement,
+      popper: popperInstance,
+    })
 
     await this.goToStep(stepIndex)
   }
@@ -163,30 +182,17 @@ export class Tour {
         if (!popper) {
           throw new Error('this.popperInstance is nil')
         }
-    
-        // Call steps middleware
-        if (step.before) {
-          await step.before({
-            step,
-            popper
-          })
-        }
-  
-        const render = step.render ? step.render : defaultRender
-  
-        popper.setOptions(
-          this.getPopperOptions(step)
-        )
-  
-        // Render popup content
-        render({
+
+        const tourStepRenderParams:TourStepRenderParams<TourStep<any>[], TourStep<any>> = {
           root: this.popperElement,
           isFirst: stepIndex === 0,
           isLast: stepIndex === this.steps.length - 1,
           isFirstRender: this.isFirstRender,
           data: step.data,
+          step,
           steps,
           stepIndex,
+          popper,
           next: async () => {
             this.currentStepIndex = stepIndex + 1 
             await this.goToStep(this.currentStepIndex)
@@ -196,7 +202,21 @@ export class Tour {
             await this.goToStep(this.currentStepIndex)
           },
           stop: () => this.stop(),
-        })
+        }
+    
+        // Call steps middleware
+        if (step.before) {
+          await step.before(tourStepRenderParams)
+        }
+  
+        const render = step.render ? step.render : () => {}
+  
+        popper.setOptions(
+          this.getPopperOptions(step)
+        )
+  
+        // Render popup content
+        render(tourStepRenderParams)
   
         this.isFirstRender = false
         popper.forceUpdate()

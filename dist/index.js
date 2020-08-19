@@ -26,64 +26,6 @@ function __awaiter(thisArg, _arguments, P, generator) {
     });
 }
 
-const defaultRender = ({ root, next, prev, stop, isFirst, isLast, isFirstRender, data, }) => {
-    if (!isFirstRender) {
-        const nextButton = root.querySelector('.tour-next-button');
-        const prevButton = root.querySelector('.tour-prev-button');
-        const content = root.querySelector('.tour-content-text');
-        if (prevButton instanceof HTMLElement) {
-            prevButton.onclick = prev;
-            if (isFirst) {
-                prevButton.setAttribute('disabled', 'disabled');
-            }
-            else {
-                prevButton.removeAttribute('disabled');
-            }
-        }
-        if (nextButton instanceof HTMLElement) {
-            nextButton.onclick = next;
-            if (isLast) {
-                nextButton.setAttribute('disabled', 'disabled');
-            }
-            else {
-                nextButton.removeAttribute('disabled');
-            }
-        }
-        if (content instanceof HTMLElement) {
-            content.innerHTML = data.toString();
-        }
-        return;
-    }
-    const nextButton = document.createElement('button');
-    nextButton.innerText = 'Next';
-    nextButton.classList.add('tour-next-button');
-    if (isLast) {
-        nextButton.setAttribute('disabled', 'disabled');
-    }
-    else {
-        nextButton.onclick = () => next();
-    }
-    const prevButton = document.createElement('button');
-    prevButton.innerText = 'Prev';
-    prevButton.classList.add('tour-prev-button');
-    if (isFirst) {
-        prevButton.setAttribute('disabled', 'disabled');
-    }
-    else {
-        prevButton.onclick = () => prev();
-    }
-    const stopButton = document.createElement('button');
-    stopButton.innerText = 'stop';
-    stopButton.onclick = stop;
-    const content = document.createElement('div');
-    content.classList.add('tour-content-text');
-    content.innerText = data.toString();
-    root.appendChild(content);
-    root.appendChild(stopButton);
-    root.appendChild(nextButton);
-    root.appendChild(prevButton);
-};
-
 class Tour {
     constructor() {
         this.steps = [];
@@ -93,6 +35,7 @@ class Tour {
         this.isFirstRender = true;
         this.goToStepPromise = Promise.resolve();
         this.started = false;
+        this.render = () => { };
         this.handleUpdateRect = () => {
             if (!this.popperInstance) {
                 throw new Error('popperInstance is nil');
@@ -113,6 +56,9 @@ class Tour {
     clear() {
         this.steps = [];
     }
+    setRender(render) {
+        this.render = render;
+    }
     start(stepIndex = 0) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.started) {
@@ -122,7 +68,15 @@ class Tour {
             this.isFirstRender = true;
             this.started = true;
             this.appendPopper();
+            const { popperInstance } = this;
+            if (!popperInstance) {
+                throw new Error('popperInstance is nil');
+            }
             this.box.start();
+            this.render({
+                root: this.popperElement,
+                popper: popperInstance,
+            });
             yield this.goToStep(stepIndex);
         });
     }
@@ -188,24 +142,16 @@ class Tour {
                 if (!popper) {
                     throw new Error('this.popperInstance is nil');
                 }
-                // Call steps middleware
-                if (step.before) {
-                    yield step.before({
-                        step,
-                        popper
-                    });
-                }
-                const render = step.render ? step.render : defaultRender;
-                popper.setOptions(this.getPopperOptions(step));
-                // Render popup content
-                render({
+                const tourStepRenderParams = {
                     root: this.popperElement,
                     isFirst: stepIndex === 0,
                     isLast: stepIndex === this.steps.length - 1,
                     isFirstRender: this.isFirstRender,
                     data: step.data,
+                    step,
                     steps,
                     stepIndex,
+                    popper,
                     next: () => __awaiter(this, void 0, void 0, function* () {
                         this.currentStepIndex = stepIndex + 1;
                         yield this.goToStep(this.currentStepIndex);
@@ -215,7 +161,15 @@ class Tour {
                         yield this.goToStep(this.currentStepIndex);
                     }),
                     stop: () => this.stop(),
-                });
+                };
+                // Call steps middleware
+                if (step.before) {
+                    yield step.before(tourStepRenderParams);
+                }
+                const render = step.render ? step.render : () => { };
+                popper.setOptions(this.getPopperOptions(step));
+                // Render popup content
+                render(tourStepRenderParams);
                 this.isFirstRender = false;
                 popper.forceUpdate();
                 this.box.clear();
