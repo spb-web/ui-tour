@@ -26,7 +26,7 @@ function __awaiter(thisArg, _arguments, P, generator) {
     });
 }
 
-class Tour {
+class UiTour {
     constructor() {
         this.steps = [];
         this.currentStepIndex = 0;
@@ -37,6 +37,7 @@ class Tour {
         this.started = false;
         this.render = () => { };
         this.popperOptions = {};
+        this.handleStop = () => { };
         this.handleUpdateRect = () => {
             if (!this.popperInstance) {
                 throw new Error('popperInstance is nil');
@@ -62,10 +63,18 @@ class Tour {
     }
     setPopperOptions(options) {
         this.popperOptions = options;
+        const { popperInstance } = this;
+        if (this.isStarted() && popperInstance) {
+            popperInstance.setOptions(options);
+            popperInstance.forceUpdate();
+        }
+    }
+    onStop(callback) {
+        this.onStop = callback;
     }
     start(stepIndex = 0) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.started) {
+            if (this.isStarted()) {
                 console.warn('[UiTour]: tour already started');
                 return;
             }
@@ -86,7 +95,7 @@ class Tour {
     }
     stop() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (!this.started) {
+            if (!this.isStarted()) {
                 console.warn('[UiTour]: tour already stoped');
                 return;
             }
@@ -96,6 +105,7 @@ class Tour {
             this.removePopper();
             this.box.stop();
             this.box.clear();
+            this.handleStop();
         });
     }
     appendPopper() {
@@ -187,4 +197,4 @@ class Tour {
     }
 }
 
-export { Tour };
+export { UiTour };

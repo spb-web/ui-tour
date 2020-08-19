@@ -1,6 +1,6 @@
-import {Tour} from '../src'
+import {UiTour} from '../src'
 
-const t = new Tour()
+const t = new UiTour()
 
 t.add({
   elements: ['.q1'],

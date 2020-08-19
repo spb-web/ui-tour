@@ -1,1 +1,1 @@
-export * from './Tour'
+export * from './UiTour'

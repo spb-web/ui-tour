@@ -6,8 +6,10 @@ export interface TourPopperRender {
   popper:PopperInstance,
 }
 
-export interface TourStepRenderParams<Steps extends TourStep<any>[], Step extends TourStep<any>>
-  extends TourPopperRender
+export interface TourStepRenderParams<
+  Steps extends TourStep<any>[], 
+  Step extends TourStep<any>,
+> extends TourPopperRender
 {
   next:() => Promise<void>,
   prev:() => Promise<void>,
@@ -21,11 +23,17 @@ export interface TourStepRenderParams<Steps extends TourStep<any>[], Step extend
   step:Step,
 }
 
-export type TourStepBefore<Steps extends TourStep<any>[], Step extends TourStep<any>> = (
+export type TourStepBefore<
+  Steps extends TourStep<any>[],
+  Step extends TourStep<any>,
+> = (
   params:TourStepRenderParams<Steps, Step>
 ) => Promise<void>
 
-export type TourStepRender<Steps extends TourStep<any>[], Step extends TourStep<any>> = (params:TourStepRenderParams<Steps,Step>) => void
+export type TourStepRender<
+  Steps extends TourStep<any>[],
+  Step extends TourStep<any>,
+> = (params:TourStepRenderParams<Steps,Step>) => void
 
 export interface TourStep<T> {
   render?:TourStepRender<TourStep<any>[], this>
@@ -35,7 +43,7 @@ export interface TourStep<T> {
   popperOptions?:Parameters<PopperInstance['setOptions']>[0]
 }
 
-export class Tour {
+export class UiTour {
   public box:BoxOverlay
   private steps:TourStep<any>[] = []
   private currentStepIndex = 0
@@ -46,6 +54,7 @@ export class Tour {
   private started = false
   private render:(payload:TourPopperRender) => void = () => {}
   private popperOptions:Parameters<PopperInstance['setOptions']>[0] = {}
+  private handleStop:() => void = () => {}
 
   constructor() {
     this.box = new BoxOverlay(this.handleUpdateRect)
@@ -71,7 +80,9 @@ export class Tour {
     this.render = render
   }
 
-  public setPopperOptions(options:Parameters<PopperInstance['setOptions']>[0]) {
+  public setPopperOptions(
+    options:Parameters<PopperInstance['setOptions']>[0]
+  ) {
     this.popperOptions = options
     
     const { popperInstance } = this
@@ -80,6 +91,10 @@ export class Tour {
       popperInstance.setOptions(options)
       popperInstance.forceUpdate()
     }
+  }
+
+  public onStop(callback:() => void) {
+    this.onStop = callback
   }
 
   public async start(stepIndex = 0) {
@@ -122,6 +137,7 @@ export class Tour {
     this.removePopper()
     this.box.stop()
     this.box.clear()
+    this.handleStop()
   }
 
   private appendPopper() {

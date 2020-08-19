@@ -25,7 +25,7 @@ export interface TourStep<T> {
     data: T;
     popperOptions?: Parameters<PopperInstance['setOptions']>[0];
 }
-export declare class Tour {
+export declare class UiTour {
     box: BoxOverlay;
     private steps;
     private currentStepIndex;
@@ -36,6 +36,7 @@ export declare class Tour {
     private started;
     private render;
     private popperOptions;
+    private handleStop;
     constructor();
     isStarted(): boolean;
     add<T>(step: TourStep<T>): void;
@@ -43,6 +44,7 @@ export declare class Tour {
     clear(): void;
     setRender(render: (payload: TourPopperRender) => void): void;
     setPopperOptions(options: Parameters<PopperInstance['setOptions']>[0]): void;
+    onStop(callback: () => void): void;
     start(stepIndex?: number): Promise<void>;
     stop(): Promise<void>;
     private appendPopper;

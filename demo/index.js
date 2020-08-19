@@ -1930,8 +1930,8 @@
         }
     }
 
-    var Tour = /** @class */ (function () {
-        function Tour() {
+    var UiTour = /** @class */ (function () {
+        function UiTour() {
             var _this = this;
             this.steps = [];
             this.currentStepIndex = 0;
@@ -1942,6 +1942,7 @@
             this.started = false;
             this.render = function () { };
             this.popperOptions = {};
+            this.handleStop = function () { };
             this.handleUpdateRect = function () {
                 if (!_this.popperInstance) {
                     throw new Error('popperInstance is nil');
@@ -1950,32 +1951,40 @@
             };
             this.box = new BoxOverlay(this.handleUpdateRect);
         }
-        Tour.prototype.isStarted = function () {
+        UiTour.prototype.isStarted = function () {
             return this.started;
         };
-        Tour.prototype.add = function (step) {
+        UiTour.prototype.add = function (step) {
             this.steps.push(step);
         };
-        Tour.prototype.remove = function (step) {
+        UiTour.prototype.remove = function (step) {
             this.steps.push(step);
         };
-        Tour.prototype.clear = function () {
+        UiTour.prototype.clear = function () {
             this.steps = [];
         };
-        Tour.prototype.setRender = function (render) {
+        UiTour.prototype.setRender = function (render) {
             this.render = render;
         };
-        Tour.prototype.setPopperOptions = function (options) {
+        UiTour.prototype.setPopperOptions = function (options) {
             this.popperOptions = options;
+            var popperInstance = this.popperInstance;
+            if (this.isStarted() && popperInstance) {
+                popperInstance.setOptions(options);
+                popperInstance.forceUpdate();
+            }
         };
-        Tour.prototype.start = function (stepIndex) {
+        UiTour.prototype.onStop = function (callback) {
+            this.onStop = callback;
+        };
+        UiTour.prototype.start = function (stepIndex) {
             if (stepIndex === void 0) { stepIndex = 0; }
             return __awaiter(this, void 0, void 0, function () {
                 var popperInstance;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            if (this.started) {
+                            if (this.isStarted()) {
                                 console.warn('[UiTour]: tour already started');
                                 return [2 /*return*/];
                             }
@@ -1999,12 +2008,12 @@
                 });
             });
         };
-        Tour.prototype.stop = function () {
+        UiTour.prototype.stop = function () {
             return __awaiter(this, void 0, void 0, function () {
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            if (!this.started) {
+                            if (!this.isStarted()) {
                                 console.warn('[UiTour]: tour already stoped');
                                 return [2 /*return*/];
                             }
@@ -2016,12 +2025,13 @@
                             this.removePopper();
                             this.box.stop();
                             this.box.clear();
+                            this.handleStop();
                             return [2 /*return*/];
                     }
                 });
             });
         };
-        Tour.prototype.appendPopper = function () {
+        UiTour.prototype.appendPopper = function () {
             var overlay = this.box.overlay;
             this.popperInstance = createPopper(overlay.getElement(), this.popperElement, {
                 modifiers: [
@@ -2038,7 +2048,7 @@
             });
             document.body.appendChild(this.popperElement);
         };
-        Tour.prototype.removePopper = function () {
+        UiTour.prototype.removePopper = function () {
             var _a = this, popperInstance = _a.popperInstance, popperElement = _a.popperElement;
             var body = document.body;
             if (popperInstance) {
@@ -2048,10 +2058,10 @@
                 body.removeChild(popperElement);
             }
         };
-        Tour.prototype.getPopperOptions = function (step) {
+        UiTour.prototype.getPopperOptions = function (step) {
             return Object.assign(this.popperOptions, step.popperOptions || {});
         };
-        Tour.prototype.goToStep = function (stepIndex) {
+        UiTour.prototype.goToStep = function (stepIndex) {
             var _this = this;
             var steps = this.steps;
             var length = steps.length;
@@ -2140,10 +2150,10 @@
             }); })();
             return this.goToStepPromise;
         };
-        return Tour;
+        return UiTour;
     }());
 
-    var t = new Tour();
+    var t = new UiTour();
     t.add({
         elements: ['.q1'],
         before: function () { return new Promise(function (r) { return setTimeout(r, 500); }); },
