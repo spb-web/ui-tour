@@ -36,6 +36,7 @@ class Tour {
         this.goToStepPromise = Promise.resolve();
         this.started = false;
         this.render = () => { };
+        this.popperOptions = {};
         this.handleUpdateRect = () => {
             if (!this.popperInstance) {
                 throw new Error('popperInstance is nil');
@@ -58,6 +59,9 @@ class Tour {
     }
     setRender(render) {
         this.render = render;
+    }
+    setPopperOptions(options) {
+        this.popperOptions = options;
     }
     start(stepIndex = 0) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -121,7 +125,7 @@ class Tour {
         }
     }
     getPopperOptions(step) {
-        return Object.assign({}, step.popperOptions || {});
+        return Object.assign(this.popperOptions, step.popperOptions || {});
     }
     goToStep(stepIndex) {
         const { steps } = this;

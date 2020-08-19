@@ -1941,6 +1941,7 @@
             this.goToStepPromise = Promise.resolve();
             this.started = false;
             this.render = function () { };
+            this.popperOptions = {};
             this.handleUpdateRect = function () {
                 if (!_this.popperInstance) {
                     throw new Error('popperInstance is nil');
@@ -1963,6 +1964,9 @@
         };
         Tour.prototype.setRender = function (render) {
             this.render = render;
+        };
+        Tour.prototype.setPopperOptions = function (options) {
+            this.popperOptions = options;
         };
         Tour.prototype.start = function (stepIndex) {
             if (stepIndex === void 0) { stepIndex = 0; }
@@ -2045,7 +2049,7 @@
             }
         };
         Tour.prototype.getPopperOptions = function (step) {
-            return Object.assign({}, step.popperOptions || {});
+            return Object.assign(this.popperOptions, step.popperOptions || {});
         };
         Tour.prototype.goToStep = function (stepIndex) {
             var _this = this;

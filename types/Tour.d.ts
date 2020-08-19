@@ -35,12 +35,14 @@ export declare class Tour {
     private goToStepPromise;
     private started;
     private render;
+    private popperOptions;
     constructor();
     isStarted(): boolean;
     add<T>(step: TourStep<T>): void;
     remove(step: TourStep<any>): void;
     clear(): void;
     setRender(render: (payload: TourPopperRender) => void): void;
+    setPopperOptions(options: Parameters<PopperInstance['setOptions']>[0]): void;
     start(stepIndex?: number): Promise<void>;
     stop(): Promise<void>;
     private appendPopper;

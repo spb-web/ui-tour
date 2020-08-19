@@ -45,6 +45,7 @@ export class Tour {
   private goToStepPromise = Promise.resolve()
   private started = false
   private render:(payload:TourPopperRender) => void = () => {}
+  private popperOptions:Parameters<PopperInstance['setOptions']>[0] = {}
 
   constructor() {
     this.box = new BoxOverlay(this.handleUpdateRect)
@@ -70,8 +71,19 @@ export class Tour {
     this.render = render
   }
 
+  public setPopperOptions(options:Parameters<PopperInstance['setOptions']>[0]) {
+    this.popperOptions = options
+    
+    const { popperInstance } = this
+
+    if (this.isStarted() && popperInstance) {
+      popperInstance.setOptions(options)
+      popperInstance.forceUpdate()
+    }
+  }
+
   public async start(stepIndex = 0) {
-    if (this.started) {
+    if (this.isStarted()) {
       console.warn('[UiTour]: tour already started')
       return
     }
@@ -97,7 +109,7 @@ export class Tour {
   }
 
   public async stop() {
-    if (!this.started) {
+    if (!this.isStarted()) {
       console.warn('[UiTour]: tour already stoped')
       return
     }
@@ -154,7 +166,7 @@ export class Tour {
   private getPopperOptions<T>(
     step:TourStep<T>,
   ):Parameters<PopperInstance['setOptions']>[0] {
-    return Object.assign({}, step.popperOptions || {})
+    return Object.assign(this.popperOptions, step.popperOptions || {})
   }
 
   private goToStep(stepIndex:number) {
