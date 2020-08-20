@@ -1741,6 +1741,9 @@
         constructor() {
             this.element = document.createElement('div');
             this.disableEventsElement = document.createElement('div');
+            this.option = {
+                disableEvents: true,
+            };
             this.style = {
                 color: 'rgba(0,0,0,.5)',
                 borderRadius: 5,
@@ -1757,6 +1760,12 @@
                 bottom: '0',
             });
             this.applyStyle();
+        }
+        set disableEvents(bool) {
+            this.option.disableEvents = bool;
+        }
+        get disableEvents() {
+            return this.option.disableEvents;
         }
         set color(color) {
             this.style.color = color;
@@ -1796,16 +1805,22 @@
                     width: `${rect.width}px`,
                     height: `${rect.height}px`
                 });
-                applyStyle(this.disableEventsElement, {
-                    clipPath: 'polygon(0% 0%, 0 100%,'
-                        + `${rect.x}px 100%,`
-                        + `${rect.x}px ${rect.y}px,`
-                        + `${rect.x + rect.width}px ${rect.y}px,`
-                        + `${rect.x + rect.width}px ${rect.y + rect.height}px,`
-                        + `${rect.x}px ${rect.y + rect.height}px,`
-                        + `${rect.x}px 100%,`
-                        + '100% 100%, 100% 0%)',
-                });
+                const { disableEventsElement } = this;
+                if (this.disableEvents) {
+                    applyStyle(disableEventsElement, {
+                        clipPath: 'polygon(0% 0%, 0 100%,'
+                            + `${rect.x}px 100%,`
+                            + `${rect.x}px ${rect.y}px,`
+                            + `${rect.x + rect.width}px ${rect.y}px,`
+                            + `${rect.x + rect.width}px ${rect.y + rect.height}px,`
+                            + `${rect.x}px ${rect.y + rect.height}px,`
+                            + `${rect.x}px 100%,`
+                            + '100% 100%, 100% 0%)',
+                    });
+                }
+                else {
+                    applyStyle(disableEventsElement, { clipPath: 'none', });
+                }
             }
             else {
                 this.destroy();
@@ -1847,40 +1862,28 @@
     class BoxOverlay {
         constructor(handleUpdate = (rect) => { }) {
             this.overlay = new Overlay();
-            this.elements = [];
+            this.elementsOrSelectors = [];
             this.rect = null;
             this.requestAnimationFrameId = -1;
             this.handleUpdate = handleUpdate;
         }
         add(selectorOrElement) {
-            try {
-                const elements = this.getElements(selectorOrElement);
-                this.elements.push(...elements);
-            }
-            catch (error) {
-                console.error(error);
-            }
-        }
-        remove(selectorOrElement) {
-            if (typeof selectorOrElement === 'string') {
-                this.elements = this.elements.filter(item => !item.matches(selectorOrElement));
-            }
-            else {
-                this.elements = this.elements.filter(item => item !== selectorOrElement);
-            }
+            this.elementsOrSelectors.push(selectorOrElement);
         }
         clear() {
-            this.elements = [];
+            this.elementsOrSelectors = [];
         }
-        getElements(selectorOrElement) {
-            if (typeof selectorOrElement === 'string') {
-                const findedElement = document.querySelectorAll(selectorOrElement);
-                if (!findedElement) {
-                    throw new Error(`Can not find element by selector ${selectorOrElement}`);
+        getElements() {
+            return this.elementsOrSelectors.reduce((elements, selectorOrElement) => {
+                if (typeof selectorOrElement === 'string') {
+                    const findedElement = document.querySelectorAll(selectorOrElement);
+                    if (!findedElement) {
+                        throw new Error(`Can not find element by selector ${selectorOrElement}`);
+                    }
+                    return elements.concat(Array.from(findedElement));
                 }
-                return Array.from(findedElement);
-            }
-            return [selectorOrElement];
+                return elements.concat([selectorOrElement]);
+            }, []);
         }
         getPosition(element) {
             const domRect = element.getBoundingClientRect();
@@ -1903,7 +1906,8 @@
             });
         }
         calcBox() {
-            if (this.elements.length === 0) {
+            const elements = this.getElements();
+            if (elements.length === 0) {
                 this.rect = null;
                 return;
             }
@@ -1919,7 +1923,7 @@
             const boxRect = this.rect;
             let bottom = 0;
             let right = 0;
-            this.elements.map(this.getPosition).forEach((elRect) => {
+            elements.map(this.getPosition).forEach((elRect) => {
                 boxRect.x = Math.min(elRect.x, boxRect.x);
                 boxRect.y = Math.min(elRect.y, boxRect.y);
                 right = Math.max(elRect.x + elRect.width, right);
@@ -2077,30 +2081,31 @@
             }
             // Check step index [END]
             this.goToStepPromise = (function () { return __awaiter(_this, void 0, void 0, function () {
-                var step, popper, tourStepRenderParams, render, error_1;
+                var step_1, popper, tourStepRenderParams_1, render, error_1;
                 var _this = this;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
+                var _a;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
                         case 0:
-                            _a.trys.push([0, 4, , 5]);
+                            _b.trys.push([0, 4, , 5]);
                             // Waiting for the previous step to complete
                             return [4 /*yield*/, this.goToStepPromise];
                         case 1:
                             // Waiting for the previous step to complete
-                            _a.sent();
+                            _b.sent();
                             this.currentStepIndex = stepIndex;
-                            step = steps[stepIndex];
+                            step_1 = steps[stepIndex];
                             popper = this.popperInstance;
                             if (!popper) {
                                 throw new Error('this.popperInstance is nil');
                             }
-                            tourStepRenderParams = {
+                            tourStepRenderParams_1 = {
                                 root: this.popperElement,
                                 isFirst: stepIndex === 0,
                                 isLast: stepIndex === this.steps.length - 1,
                                 isFirstRender: this.isFirstRender,
-                                data: step.data,
-                                step: step,
+                                data: step_1.data,
+                                step: step_1,
                                 steps: steps,
                                 stepIndex: stepIndex,
                                 popper: popper,
@@ -2108,9 +2113,13 @@
                                     return __generator(this, function (_a) {
                                         switch (_a.label) {
                                             case 0:
-                                                this.currentStepIndex = stepIndex + 1;
-                                                return [4 /*yield*/, this.goToStep(this.currentStepIndex)];
+                                                if (!step_1.after) return [3 /*break*/, 2];
+                                                return [4 /*yield*/, step_1.after(tourStepRenderParams_1)];
                                             case 1:
+                                                _a.sent();
+                                                _a.label = 2;
+                                            case 2: return [4 /*yield*/, this.goToStep(stepIndex + 1)];
+                                            case 3:
                                                 _a.sent();
                                                 return [2 /*return*/];
                                         }
@@ -2120,33 +2129,47 @@
                                     return __generator(this, function (_a) {
                                         switch (_a.label) {
                                             case 0:
-                                                this.currentStepIndex = stepIndex - 1;
-                                                return [4 /*yield*/, this.goToStep(this.currentStepIndex)];
+                                                if (!step_1.after) return [3 /*break*/, 2];
+                                                return [4 /*yield*/, step_1.after(tourStepRenderParams_1)];
+                                            case 1:
+                                                _a.sent();
+                                                _a.label = 2;
+                                            case 2: return [4 /*yield*/, this.goToStep(stepIndex - 1)];
+                                            case 3:
+                                                _a.sent();
+                                                return [2 /*return*/];
+                                        }
+                                    });
+                                }); },
+                                stop: function () { return __awaiter(_this, void 0, void 0, function () {
+                                    return __generator(this, function (_a) {
+                                        switch (_a.label) {
+                                            case 0: return [4 /*yield*/, this.stop()];
                                             case 1:
                                                 _a.sent();
                                                 return [2 /*return*/];
                                         }
                                     });
                                 }); },
-                                stop: function () { return _this.stop(); },
                             };
-                            if (!step.before) return [3 /*break*/, 3];
-                            return [4 /*yield*/, step.before(tourStepRenderParams)];
+                            if (!step_1.before) return [3 /*break*/, 3];
+                            return [4 /*yield*/, step_1.before(tourStepRenderParams_1)];
                         case 2:
-                            _a.sent();
-                            _a.label = 3;
+                            _b.sent();
+                            _b.label = 3;
                         case 3:
-                            render = step.render ? step.render : function () { };
-                            popper.setOptions(this.getPopperOptions(step));
+                            render = step_1.render ? step_1.render : function () { };
+                            popper.setOptions(this.getPopperOptions(step_1));
                             // Render popup content
-                            render(tourStepRenderParams);
+                            render(tourStepRenderParams_1);
                             this.isFirstRender = false;
                             popper.forceUpdate();
                             this.box.clear();
-                            step.elements.forEach(function (element) { return _this.box.add(element); });
+                            step_1.elements.forEach(function (element) { return _this.box.add(element); });
+                            this.box.overlay.disableEvents = (_a = step_1.disableEvents) !== null && _a !== void 0 ? _a : false;
                             return [3 /*break*/, 5];
                         case 4:
-                            error_1 = _a.sent();
+                            error_1 = _b.sent();
                             console.error(error_1);
                             return [3 /*break*/, 5];
                         case 5: return [2 /*return*/];

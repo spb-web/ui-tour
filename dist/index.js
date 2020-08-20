@@ -151,6 +151,7 @@ class UiTour {
         }
         // Check step index [END]
         this.goToStepPromise = (() => __awaiter(this, void 0, void 0, function* () {
+            var _a;
             try {
                 // Waiting for the previous step to complete
                 yield this.goToStepPromise;
@@ -171,14 +172,20 @@ class UiTour {
                     stepIndex,
                     popper,
                     next: () => __awaiter(this, void 0, void 0, function* () {
-                        this.currentStepIndex = stepIndex + 1;
-                        yield this.goToStep(this.currentStepIndex);
+                        if (step.after) {
+                            yield step.after(tourStepRenderParams);
+                        }
+                        yield this.goToStep(stepIndex + 1);
                     }),
                     prev: () => __awaiter(this, void 0, void 0, function* () {
-                        this.currentStepIndex = stepIndex - 1;
-                        yield this.goToStep(this.currentStepIndex);
+                        if (step.after) {
+                            yield step.after(tourStepRenderParams);
+                        }
+                        yield this.goToStep(stepIndex - 1);
                     }),
-                    stop: () => this.stop(),
+                    stop: () => __awaiter(this, void 0, void 0, function* () {
+                        yield this.stop();
+                    }),
                 };
                 // Call steps middleware
                 if (step.before) {
@@ -192,6 +199,7 @@ class UiTour {
                 popper.forceUpdate();
                 this.box.clear();
                 step.elements.forEach(element => this.box.add(element));
+                this.box.overlay.disableEvents = (_a = step.disableEvents) !== null && _a !== void 0 ? _a : false;
             }
             catch (error) {
                 console.error(error);

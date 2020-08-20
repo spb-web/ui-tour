@@ -36,11 +36,35 @@ export type TourStepRender<
 > = (params:TourStepRenderParams<Steps,Step>) => void
 
 export interface TourStep<T> {
+  /**
+   * Вызывается для рендеринга или обновления попапа
+   */
   render?:TourStepRender<TourStep<any>[], this>
+  /**
+   * Вызывается перед переходм к текущему шагу
+   */
   before?:TourStepBefore<TourStep<any>[], this>
+  /**
+   * Вызывается перед переходм к следующему шагу
+   */
+  after?:TourStepBefore<TourStep<any>[], this>
+  /**
+   * Список выделяемых элементов
+   */
   elements:(string|Element)[]
+  /**
+   * Данные которые будут переданы для рендеринга
+   */
   data:T
+  /**
+   * See https://popper.js.org/docs/v2/
+   */
   popperOptions?:Parameters<PopperInstance['setOptions']>[0]
+  /**
+   * Если установить в true то выделеная область будет не 
+   * кликабельной
+   */
+  disableEvents?:boolean
 }
 
 interface UiTourConstructorOptions {
@@ -222,6 +246,7 @@ export class UiTour {
         await this.goToStepPromise
 
         this.currentStepIndex = stepIndex
+  
         const step = steps[stepIndex]
         const { popperInstance: popper } = this
         
@@ -240,14 +265,22 @@ export class UiTour {
           stepIndex,
           popper,
           next: async () => {
-            this.currentStepIndex = stepIndex + 1 
-            await this.goToStep(this.currentStepIndex)
+            if (step.after) {
+              await step.after(tourStepRenderParams)
+            }
+
+            await this.goToStep(stepIndex + 1)
           },
           prev: async () => {
-            this.currentStepIndex = stepIndex - 1 
-            await this.goToStep(this.currentStepIndex)
+            if (step.after) {
+              await step.after(tourStepRenderParams)
+            }
+
+            await this.goToStep(stepIndex - 1)
           },
-          stop: () => this.stop(),
+          stop: async () => {
+            await this.stop()
+          },
         }
     
         // Call steps middleware
@@ -270,6 +303,7 @@ export class UiTour {
         this.box.clear()
         
         step.elements.forEach(element => this.box.add(element))
+        this.box.overlay.disableEvents = step.disableEvents ?? false
       } catch (error) {
         console.error(error)
       }
