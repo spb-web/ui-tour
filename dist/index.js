@@ -39,10 +39,13 @@ class UiTour {
         this.render = () => { };
         this.handleStop = () => { };
         this.handleUpdateRect = () => {
-            if (!this.popperInstance) {
+            const { popperInstance } = this;
+            if (!popperInstance) {
                 throw new Error('popperInstance is nil');
             }
-            this.popperInstance.forceUpdate();
+            requestAnimationFrame(() => {
+                popperInstance.forceUpdate();
+            });
         };
         this.box = new BoxOverlay(this.handleUpdateRect);
         this.setRender(render);

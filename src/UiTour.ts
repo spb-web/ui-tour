@@ -307,10 +307,14 @@ export class UiTour {
   } 
 
   private handleUpdateRect = () => {
-    if (!this.popperInstance) {
+    const { popperInstance } = this
+
+    if (!popperInstance) {
       throw new Error('popperInstance is nil')
     }
 
-    this.popperInstance.forceUpdate()
+    requestAnimationFrame(() => {
+      popperInstance.forceUpdate()
+    })
   }
 }
