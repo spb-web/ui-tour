@@ -1780,16 +1780,12 @@
                 willСhange: 'transform, width, height',
             });
             setDefaultOverlayStyles(disableEventsElement);
-            // applyStyle(
-            //   disableEventsElement, 
-            //   {
-            //     right: '0',
-            //     bottom: '0',
-            //     willСhange: 'clip-path',
-            //   }
-            // )
+            applyStyle(disableEventsElement, {
+                right: '0',
+                bottom: '0',
+            });
             EVENTS_LIST.forEach(eventName => {
-                disableEventsElement.addEventListener(eventName, disableMouseEvents, { passive: true });
+                disableEventsElement.addEventListener(eventName, disableMouseEvents, { passive: true, capture: true });
             });
             this.applyStyle();
         }
@@ -1877,13 +1873,13 @@
             }
         }
         applyStyle() {
-            const { element, style } = this;
-            applyStyle(element, {
+            const { style } = this;
+            applyStyle(this.element, {
                 boxShadow: `0 0 0 40000px ${style.color}`,
                 borderRadius: `${style.borderRadius}px`,
                 zIndex: `${style.zIndex}`,
             });
-            applyStyle(element, {
+            applyStyle(this.disableEventsElement, {
                 zIndex: `${style.zIndex + 1}`,
             });
         }
