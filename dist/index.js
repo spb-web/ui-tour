@@ -151,7 +151,6 @@ class UiTour {
         }
         // Check step index [END]
         this.goToStepPromise = (() => __awaiter(this, void 0, void 0, function* () {
-            var _a;
             try {
                 // Waiting for the previous step to complete
                 yield this.goToStepPromise;
@@ -199,7 +198,7 @@ class UiTour {
                 popper.forceUpdate();
                 this.box.clear();
                 step.elements.forEach(element => this.box.add(element));
-                this.box.overlay.disableEvents = (_a = step.disableEvents) !== null && _a !== void 0 ? _a : false;
+                this.box.overlay.disableEvents = step.disableEvents || false;
             }
             catch (error) {
                 console.error(error);

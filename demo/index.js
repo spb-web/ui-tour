@@ -1736,13 +1736,20 @@
             top: '0',
         });
     };
+    const isEqualDOMRect = (firstDOMRect, secondDOMRect) => ((firstDOMRect === null && secondDOMRect === null)
+        || (firstDOMRect
+            && secondDOMRect
+            && (firstDOMRect.x === secondDOMRect.x
+                && firstDOMRect.y === secondDOMRect.y
+                && firstDOMRect.width === secondDOMRect.width
+                && firstDOMRect.height === secondDOMRect.height)));
 
     class Overlay {
         constructor() {
             this.element = document.createElement('div');
             this.disableEventsElement = document.createElement('div');
             this.option = {
-                disableEvents: true,
+                disableEvents: false,
             };
             this.style = {
                 color: 'rgba(0,0,0,.5)',
@@ -1753,12 +1760,18 @@
             setDefaultOverlayStyles(element);
             applyStyle(element, {
                 pointerEvents: 'none',
+                willСhange: 'transform, width, height',
             });
             setDefaultOverlayStyles(disableEventsElement);
             applyStyle(disableEventsElement, {
                 right: '0',
                 bottom: '0',
+                willСhange: 'clip-path',
             });
+            disableEventsElement.onclick = (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+            };
             this.applyStyle();
         }
         set disableEvents(bool) {
@@ -1805,22 +1818,17 @@
                     width: `${rect.width}px`,
                     height: `${rect.height}px`
                 });
-                const { disableEventsElement } = this;
-                if (this.disableEvents) {
-                    applyStyle(disableEventsElement, {
-                        clipPath: 'polygon(0% 0%, 0 100%,'
-                            + `${rect.x}px 100%,`
-                            + `${rect.x}px ${rect.y}px,`
-                            + `${rect.x + rect.width}px ${rect.y}px,`
-                            + `${rect.x + rect.width}px ${rect.y + rect.height}px,`
-                            + `${rect.x}px ${rect.y + rect.height}px,`
-                            + `${rect.x}px 100%,`
-                            + '100% 100%, 100% 0%)',
-                    });
-                }
-                else {
-                    applyStyle(disableEventsElement, { clipPath: 'none', });
-                }
+                const clipPath = this.disableEvents
+                    ? 'none'
+                    : ('polygon(0% 0%, 0 100%,'
+                        + `${rect.x}px 100%,`
+                        + `${rect.x}px ${rect.y}px,`
+                        + `${rect.x + rect.width}px ${rect.y}px,`
+                        + `${rect.x + rect.width}px ${rect.y + rect.height}px,`
+                        + `${rect.x}px ${rect.y + rect.height}px,`
+                        + `${rect.x}px 100%,`
+                        + '100% 100%, 100% 0%)');
+                applyStyle(this.disableEventsElement, { clipPath: clipPath, });
             }
             else {
                 this.destroy();
@@ -1898,9 +1906,25 @@
             this.overlay.destroy();
         }
         watch() {
-            this.calcBox();
-            this.handleUpdate(this.rect);
-            this.overlay.setRect(this.rect);
+            const rect = this.calcBox();
+            if (!isEqualDOMRect(this.rect, rect)) {
+                if (!rect) {
+                    this.rect = rect;
+                }
+                else {
+                    if (!this.rect) {
+                        this.rect = new DOMRect(rect.x, rect.y, rect.width, rect.height);
+                    }
+                    else {
+                        this.rect.x = rect.x;
+                        this.rect.y = rect.y;
+                        this.rect.width = rect.width;
+                        this.rect.height = rect.height;
+                    }
+                }
+                this.handleUpdate(this.rect);
+                this.overlay.setRect(this.rect);
+            }
             this.requestAnimationFrameId = requestAnimationFrame(() => {
                 this.watch();
             });
@@ -1908,29 +1932,23 @@
         calcBox() {
             const elements = this.getElements();
             if (elements.length === 0) {
-                this.rect = null;
-                return;
+                return null;
             }
-            if (this.rect === null) {
-                this.rect = new DOMRect(Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER, 0, 0);
-            }
-            else {
-                this.rect.x = Number.MAX_SAFE_INTEGER;
-                this.rect.y = Number.MAX_SAFE_INTEGER;
-                this.rect.width = 0;
-                this.rect.height = 0;
-            }
-            const boxRect = this.rect;
+            let x = Number.MAX_SAFE_INTEGER;
+            let y = Number.MAX_SAFE_INTEGER;
+            let width = 0;
+            let height = 0;
             let bottom = 0;
             let right = 0;
             elements.map(this.getPosition).forEach((elRect) => {
-                boxRect.x = Math.min(elRect.x, boxRect.x);
-                boxRect.y = Math.min(elRect.y, boxRect.y);
+                x = Math.min(elRect.x, x);
+                y = Math.min(elRect.y, y);
                 right = Math.max(elRect.x + elRect.width, right);
                 bottom = Math.max(elRect.y + elRect.height, bottom);
             });
-            boxRect.width = right - boxRect.x;
-            boxRect.height = bottom - boxRect.y;
+            width = right - x;
+            height = bottom - y;
+            return { x, y, width, height };
         }
     }
 
@@ -2083,16 +2101,15 @@
             this.goToStepPromise = (function () { return __awaiter(_this, void 0, void 0, function () {
                 var step_1, popper, tourStepRenderParams_1, render, error_1;
                 var _this = this;
-                var _a;
-                return __generator(this, function (_b) {
-                    switch (_b.label) {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
                         case 0:
-                            _b.trys.push([0, 4, , 5]);
+                            _a.trys.push([0, 4, , 5]);
                             // Waiting for the previous step to complete
                             return [4 /*yield*/, this.goToStepPromise];
                         case 1:
                             // Waiting for the previous step to complete
-                            _b.sent();
+                            _a.sent();
                             this.currentStepIndex = stepIndex;
                             step_1 = steps[stepIndex];
                             popper = this.popperInstance;
@@ -2155,8 +2172,8 @@
                             if (!step_1.before) return [3 /*break*/, 3];
                             return [4 /*yield*/, step_1.before(tourStepRenderParams_1)];
                         case 2:
-                            _b.sent();
-                            _b.label = 3;
+                            _a.sent();
+                            _a.label = 3;
                         case 3:
                             render = step_1.render ? step_1.render : function () { };
                             popper.setOptions(this.getPopperOptions(step_1));
@@ -2166,10 +2183,10 @@
                             popper.forceUpdate();
                             this.box.clear();
                             step_1.elements.forEach(function (element) { return _this.box.add(element); });
-                            this.box.overlay.disableEvents = (_a = step_1.disableEvents) !== null && _a !== void 0 ? _a : false;
+                            this.box.overlay.disableEvents = step_1.disableEvents || false;
                             return [3 /*break*/, 5];
                         case 4:
-                            error_1 = _b.sent();
+                            error_1 = _a.sent();
                             console.error(error_1);
                             return [3 /*break*/, 5];
                         case 5: return [2 /*return*/];
