@@ -106,8 +106,17 @@ class UiTour {
                 console.warn('[UiTour]: tour already stoped');
                 return;
             }
+            const { popperInstance: popper, currentStepIndex } = this;
+            if (!popper) {
+                throw new Error('this.popperInstance is nil');
+            }
             this.started = false;
             yield this.goToStepPromise;
+            this.checkStepIndex(currentStepIndex);
+            const { after } = this.steps[currentStepIndex];
+            if (after) {
+                yield after(this.getTourStepRenderParams(currentStepIndex, popper));
+            }
             this.popperElement.innerHTML = '';
             this.removePopper();
             this.box.stop();
@@ -144,15 +153,45 @@ class UiTour {
     getPopperOptions(step) {
         return Object.assign(this.popperOptions, step.popperOptions || {});
     }
-    goToStep(stepIndex) {
-        const { steps } = this;
-        const { length } = steps;
-        // Check step index [BEGIN]
-        if (stepIndex < 0 || stepIndex >= length) {
+    checkStepIndex(stepIndex) {
+        if (stepIndex < 0 || stepIndex >= this.steps.length) {
             throw new Error('[UiTour]: stepIndex go outside the range of the steps array'
                 + `\n steps length is ${length}; stepIndex is ${stepIndex}`);
         }
-        // Check step index [END]
+    }
+    getTourStepRenderParams(stepIndex, popper) {
+        const step = this.steps[stepIndex];
+        const tourStepRenderParams = {
+            root: this.popperElement,
+            isFirst: stepIndex === 0,
+            isLast: stepIndex === this.steps.length - 1,
+            isFirstRender: this.isFirstRender,
+            data: step.data,
+            step,
+            steps: this.steps,
+            stepIndex,
+            popper,
+            next: () => __awaiter(this, void 0, void 0, function* () {
+                if (step.after) {
+                    yield step.after(tourStepRenderParams);
+                }
+                yield this.goToStep(stepIndex + 1);
+            }),
+            prev: () => __awaiter(this, void 0, void 0, function* () {
+                if (step.after) {
+                    yield step.after(tourStepRenderParams);
+                }
+                yield this.goToStep(stepIndex - 1);
+            }),
+            stop: () => __awaiter(this, void 0, void 0, function* () {
+                yield this.stop();
+            }),
+        };
+        return tourStepRenderParams;
+    }
+    goToStep(stepIndex) {
+        this.checkStepIndex(stepIndex);
+        const { steps } = this;
         this.goToStepPromise = (() => __awaiter(this, void 0, void 0, function* () {
             try {
                 // Waiting for the previous step to complete
@@ -163,32 +202,7 @@ class UiTour {
                 if (!popper) {
                     throw new Error('this.popperInstance is nil');
                 }
-                const tourStepRenderParams = {
-                    root: this.popperElement,
-                    isFirst: stepIndex === 0,
-                    isLast: stepIndex === this.steps.length - 1,
-                    isFirstRender: this.isFirstRender,
-                    data: step.data,
-                    step,
-                    steps,
-                    stepIndex,
-                    popper,
-                    next: () => __awaiter(this, void 0, void 0, function* () {
-                        if (step.after) {
-                            yield step.after(tourStepRenderParams);
-                        }
-                        yield this.goToStep(stepIndex + 1);
-                    }),
-                    prev: () => __awaiter(this, void 0, void 0, function* () {
-                        if (step.after) {
-                            yield step.after(tourStepRenderParams);
-                        }
-                        yield this.goToStep(stepIndex - 1);
-                    }),
-                    stop: () => __awaiter(this, void 0, void 0, function* () {
-                        yield this.stop();
-                    }),
-                };
+                const tourStepRenderParams = this.getTourStepRenderParams(stepIndex, popper);
                 // Call steps middleware
                 if (step.before) {
                     yield step.before(tourStepRenderParams);

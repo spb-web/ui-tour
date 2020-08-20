@@ -166,9 +166,28 @@ export class UiTour {
       return
     }
 
+    const { popperInstance: popper, currentStepIndex } = this
+        
+    if (!popper) {
+      throw new Error('this.popperInstance is nil')
+    }
+
     this.started = false
 
     await this.goToStepPromise
+
+    this.checkStepIndex(currentStepIndex)
+
+    const { after } = this.steps[currentStepIndex]
+
+    if (after) {
+      await after(
+        this.getTourStepRenderParams(
+          currentStepIndex,
+          popper,
+        )
+      )
+    }
 
     this.popperElement.innerHTML = ''
     this.removePopper()
@@ -222,18 +241,54 @@ export class UiTour {
     return Object.assign(this.popperOptions, step.popperOptions || {})
   }
 
-  private goToStep(stepIndex:number) {
-    const { steps } = this
-    const { length } = steps
-
-    // Check step index [BEGIN]
-    if (stepIndex < 0 || stepIndex >= length) {
+  private checkStepIndex(stepIndex:number) {
+    if (stepIndex < 0 || stepIndex >= this.steps.length) {
       throw new Error(
         '[UiTour]: stepIndex go outside the range of the steps array'
         + `\n steps length is ${length}; stepIndex is ${stepIndex}`
       )
     }
-    // Check step index [END]
+  }
+
+  private getTourStepRenderParams(stepIndex:number, popper:PopperInstance) {
+    const step = this.steps[stepIndex]
+
+    const tourStepRenderParams:TourStepRenderParams<TourStep<any>[], TourStep<any>> = {
+      root: this.popperElement,
+      isFirst: stepIndex === 0,
+      isLast: stepIndex === this.steps.length - 1,
+      isFirstRender: this.isFirstRender,
+      data: step.data,
+      step,
+      steps: this.steps,
+      stepIndex,
+      popper,
+      next: async () => {
+        if (step.after) {
+          await step.after(tourStepRenderParams)
+        }
+
+        await this.goToStep(stepIndex + 1)
+      },
+      prev: async () => {
+        if (step.after) {
+          await step.after(tourStepRenderParams)
+        }
+
+        await this.goToStep(stepIndex - 1)
+      },
+      stop: async () => {
+        await this.stop()
+      },
+    }
+
+    return tourStepRenderParams
+  }
+
+  private goToStep(stepIndex:number) {
+    this.checkStepIndex(stepIndex)
+
+    const { steps } = this
 
     this.goToStepPromise = (async () => {
       try {
@@ -249,34 +304,10 @@ export class UiTour {
           throw new Error('this.popperInstance is nil')
         }
 
-        const tourStepRenderParams:TourStepRenderParams<TourStep<any>[], TourStep<any>> = {
-          root: this.popperElement,
-          isFirst: stepIndex === 0,
-          isLast: stepIndex === this.steps.length - 1,
-          isFirstRender: this.isFirstRender,
-          data: step.data,
-          step,
-          steps,
+        const tourStepRenderParams = this.getTourStepRenderParams(
           stepIndex,
           popper,
-          next: async () => {
-            if (step.after) {
-              await step.after(tourStepRenderParams)
-            }
-
-            await this.goToStep(stepIndex + 1)
-          },
-          prev: async () => {
-            if (step.after) {
-              await step.after(tourStepRenderParams)
-            }
-
-            await this.goToStep(stepIndex - 1)
-          },
-          stop: async () => {
-            await this.stop()
-          },
-        }
+        )
     
         // Call steps middleware
         if (step.before) {

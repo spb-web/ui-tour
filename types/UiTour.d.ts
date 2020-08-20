@@ -75,6 +75,8 @@ export declare class UiTour {
     private appendPopper;
     private removePopper;
     private getPopperOptions;
+    private checkStepIndex;
+    private getTourStepRenderParams;
     private goToStep;
     private handleUpdateRect;
 }
