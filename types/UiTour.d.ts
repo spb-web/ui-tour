@@ -43,11 +43,6 @@ export interface TourStep<T> {
      * See https://popper.js.org/docs/v2/
      */
     popperOptions?: Parameters<PopperInstance['setOptions']>[0];
-    /**
-     * Если установить в true то выделеная область будет не
-     * кликабельной
-     */
-    disableEvents?: boolean;
 }
 interface UiTourConstructorOptions {
     render?: (payload: TourPopperRender) => void;

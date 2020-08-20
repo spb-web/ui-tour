@@ -60,11 +60,6 @@ export interface TourStep<T> {
    * See https://popper.js.org/docs/v2/
    */
   popperOptions?:Parameters<PopperInstance['setOptions']>[0]
-  /**
-   * Если установить в true то выделеная область будет не 
-   * кликабельной
-   */
-  disableEvents?:boolean
 }
 
 interface UiTourConstructorOptions {
@@ -303,7 +298,6 @@ export class UiTour {
         this.box.clear()
         
         step.elements.forEach(element => this.box.add(element))
-        this.box.overlay.disableEvents = step.disableEvents || false
       } catch (error) {
         console.error(error)
       }

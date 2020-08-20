@@ -198,7 +198,6 @@ class UiTour {
                 popper.forceUpdate();
                 this.box.clear();
                 step.elements.forEach(element => this.box.add(element));
-                this.box.overlay.disableEvents = step.disableEvents || false;
             }
             catch (error) {
                 console.error(error);
