@@ -1,5 +1,5 @@
 import { createPopper, Instance as PopperInstance } from '@popperjs/core'
-import { BoxOverlay } from '@spbweb/box-overlay'
+import { BoxOverlay } from '@spb-web/box-overlay'
 
 export interface TourPopperRender {
   root:Element,
