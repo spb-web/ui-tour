@@ -28,7 +28,7 @@ export type TourStepBefore<
   Step extends TourStep<any>,
 > = (
   params:TourStepRenderParams<Steps, Step>
-) => Promise<void>
+) => Promise<boolean|void>
 
 export type TourStepRender<
   Steps extends TourStep<any>[],
@@ -189,6 +189,11 @@ export class UiTour {
       )
     }
 
+    this.stopNow()
+  }
+
+  private stopNow() {
+    this.started = false
     this.popperElement.innerHTML = ''
     this.removePopper()
     this.box.stop()
@@ -311,7 +316,13 @@ export class UiTour {
     
         // Call steps middleware
         if (step.before) {
-          await step.before(tourStepRenderParams)
+          const beforeResult = await step.before(tourStepRenderParams)
+
+          if (beforeResult === false) {
+            this.stopNow()
+
+            return
+          }
         }
   
         const render = step.render ? step.render : () => {}

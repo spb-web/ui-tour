@@ -117,12 +117,16 @@ class UiTour {
             if (after) {
                 yield after(this.getTourStepRenderParams(currentStepIndex, popper));
             }
-            this.popperElement.innerHTML = '';
-            this.removePopper();
-            this.box.stop();
-            this.box.clear();
-            this.handleStop();
+            this.stopNow();
         });
+    }
+    stopNow() {
+        this.started = false;
+        this.popperElement.innerHTML = '';
+        this.removePopper();
+        this.box.stop();
+        this.box.clear();
+        this.handleStop();
     }
     appendPopper() {
         const { overlay } = this.box;
@@ -205,7 +209,11 @@ class UiTour {
                 const tourStepRenderParams = this.getTourStepRenderParams(stepIndex, popper);
                 // Call steps middleware
                 if (step.before) {
-                    yield step.before(tourStepRenderParams);
+                    const beforeResult = yield step.before(tourStepRenderParams);
+                    if (beforeResult === false) {
+                        this.stopNow();
+                        return;
+                    }
                 }
                 const render = step.render ? step.render : () => { };
                 popper.setOptions(this.getPopperOptions(step));

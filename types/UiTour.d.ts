@@ -16,7 +16,7 @@ export interface TourStepRenderParams<Steps extends TourStep<any>[], Step extend
     stepIndex: number;
     step: Step;
 }
-export declare type TourStepBefore<Steps extends TourStep<any>[], Step extends TourStep<any>> = (params: TourStepRenderParams<Steps, Step>) => Promise<void>;
+export declare type TourStepBefore<Steps extends TourStep<any>[], Step extends TourStep<any>> = (params: TourStepRenderParams<Steps, Step>) => Promise<boolean | void>;
 export declare type TourStepRender<Steps extends TourStep<any>[], Step extends TourStep<any>> = (params: TourStepRenderParams<Steps, Step>) => void;
 export interface TourStep<T> {
     /**
@@ -72,6 +72,7 @@ export declare class UiTour {
     onStop(callback: () => void): void;
     start(stepIndex?: number): Promise<void>;
     stop(): Promise<void>;
+    private stopNow;
     private appendPopper;
     private removePopper;
     private getPopperOptions;
