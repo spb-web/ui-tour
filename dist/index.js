@@ -1,5 +1,5 @@
 import { createPopper } from '@popperjs/core';
-import { BoxOverlay } from '@spbweb/box-overlay';
+import { BoxOverlay } from '@spb-web/box-overlay';
 
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation.
