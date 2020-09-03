@@ -28,6 +28,7 @@ function __awaiter(thisArg, _arguments, P, generator) {
 
 class UiTour {
     constructor({ render = () => { }, popperOptions = {}, onStop = () => { }, steps = [], } = {}) {
+        this.box = new BoxOverlay();
         this.steps = [];
         this.currentStepIndex = 0;
         this.popperElement = document.createElement('div');
@@ -47,7 +48,7 @@ class UiTour {
                 popperInstance.forceUpdate();
             });
         };
-        this.box = new BoxOverlay(this.handleUpdateRect);
+        this.box.on('updateRect', this.handleUpdateRect);
         this.setRender(render);
         this.setPopperOptions(popperOptions);
         this.onStop(onStop);
