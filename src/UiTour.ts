@@ -70,7 +70,7 @@ interface UiTourConstructorOptions {
 }
 
 export class UiTour {
-  public box:BoxOverlay
+  public box:BoxOverlay = new BoxOverlay()
   private steps:TourStep<any>[] = []
   private currentStepIndex = 0
   private popperElement = document.createElement('div')
@@ -88,7 +88,7 @@ export class UiTour {
     onStop = () => {},
     steps = [],
   }:UiTourConstructorOptions = {}) {
-    this.box = new BoxOverlay(this.handleUpdateRect)
+    this.box.on('updateRect', this.handleUpdateRect)
 
     this.setRender(render)
     this.setPopperOptions(popperOptions)
