@@ -25,6 +25,10 @@ export interface TourStep<T> {
    * See https://popper.js.org/docs/v2/
    */
   popperOptions?:Parameters<PopperInstance['setOptions']>[0]
+  /**
+   * Если `true` - нельзя кликнуть по подцвеченному элементу
+   */
+  disableMouseEvents?:boolean
 }
 
 export interface TourPopperRender {

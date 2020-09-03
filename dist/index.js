@@ -223,6 +223,7 @@ class UiTour {
                 this.isFirstRender = false;
                 popper.forceUpdate();
                 this.box.clear();
+                this.box.overlay.disableMouseEvents = (step.disableMouseEvents || false);
                 step.elements.forEach(element => this.box.add(element));
             }
             catch (error) {
