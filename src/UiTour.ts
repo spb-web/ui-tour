@@ -287,6 +287,7 @@ export class UiTour {
         )
 
         step.elements.forEach(element => this.box.add(element))
+        this.handleUpdateRect()
       } catch (error) {
         console.error(error)
       }

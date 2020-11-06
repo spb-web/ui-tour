@@ -225,6 +225,7 @@ class UiTour {
                 this.box.clear();
                 this.box.overlay.disableMouseEvents = (step.disableMouseEvents || false);
                 step.elements.forEach(element => this.box.add(element));
+                this.handleUpdateRect();
             }
             catch (error) {
                 console.error(error);
