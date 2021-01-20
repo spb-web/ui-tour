@@ -1,5 +1,5 @@
 {
-  "name": "@nominex/ui-tour",
+  "name": "@nominex/vue-tour",
   "version": "0.0.13",
   "description": "",
   "main": "dist/index.js",
@@ -13,7 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "@popperjs/core": "^2.4.4",
-    "@spb-web/box-overlay": "0.4.1"
+    "@spb-web/box-overlay": "0.4.2"
   },
   "devDependencies": {
     "@rollup/plugin-replace": "^2.3.3",
