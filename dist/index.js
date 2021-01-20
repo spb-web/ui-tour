@@ -131,7 +131,9 @@ class UiTour {
     }
     appendPopper() {
         const { overlay } = this.box;
-        this.popperInstance = createPopper(overlay.getElement(), this.popperElement, {
+        this.popperInstance = createPopper({
+            getBoundingClientRect: () => overlay.rect
+        }, this.popperElement, {
             modifiers: [
                 {
                     name: 'addZIndex',

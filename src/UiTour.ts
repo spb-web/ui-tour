@@ -148,7 +148,9 @@ export class UiTour {
     const { overlay } = this.box
 
     this.popperInstance = createPopper(
-      overlay.getElement(),
+      {
+        getBoundingClientRect: () => overlay.rect
+      },
       this.popperElement,
       {
         modifiers: [

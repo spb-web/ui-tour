@@ -1,6 +1,6 @@
 {
   "name": "@nominex/ui-tour",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "",
   "main": "dist/index.js",
   "typings": "types/index",
@@ -13,7 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "@popperjs/core": "^2.4.4",
-    "@spb-web/box-overlay": "0.2.1"
+    "@spb-web/box-overlay": "0.4.1"
   },
   "devDependencies": {
     "@rollup/plugin-replace": "^2.3.3",
