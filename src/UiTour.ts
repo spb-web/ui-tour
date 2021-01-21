@@ -2,8 +2,14 @@ import {
   createPopper,
   Instance as PopperInstance,
 } from '@popperjs/core'
-
+import { createNanoEvents } from 'nanoevents'
 import { BoxOverlay } from '@spb-web/box-overlay'
+
+const stopedEventName = 'stoped'
+
+interface Events {
+  [stopedEventName]: () => void
+}
 
 import {
   TourPopperRender,
@@ -23,19 +29,17 @@ export class UiTour {
   private goToStepPromise = Promise.resolve()
   private started = false
   private render:(payload:TourPopperRender) => void = () => {}
-  private handleStop:() => void = () => {}
+  private emitter = createNanoEvents()
 
   constructor({
     render = () => {},
     popperOptions = {},
-    onStop = () => {},
     steps = [],
   }:UiTourConstructorOptions = {}) {
     this.box.on('updateRect', this.handleUpdateRect)
 
     this.setRender(render)
     this.setPopperOptions(popperOptions)
-    this.onStop(onStop)
 
     steps.forEach(step => this.add(step))
   }
@@ -71,10 +75,6 @@ export class UiTour {
       popperInstance.setOptions(options)
       popperInstance.forceUpdate()
     }
-  }
-
-  public onStop(callback:() => void) {
-    this.onStop = callback
   }
 
   public async start(stepIndex = 0) {
@@ -135,13 +135,17 @@ export class UiTour {
     this.stopNow()
   }
 
+  public on<E extends keyof Events>(event: E, callback: Events[E]) {
+    return this.emitter.on(event, callback)
+  }
+
   private stopNow() {
     this.started = false
     this.popperElement.innerHTML = ''
     this.removePopper()
     this.box.stop()
     this.box.clear()
-    this.handleStop()
+    this.emitter.emit(stopedEventName)
   }
 
   private appendPopper() {

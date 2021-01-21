@@ -68,6 +68,5 @@ export type TourStepRender<
 export interface UiTourConstructorOptions {
   render?:(payload:TourPopperRender) => void,
   popperOptions?:Parameters<PopperInstance['setOptions']>[0],
-  onStop?:() => void,
   steps?:TourStep<any>[]
 }

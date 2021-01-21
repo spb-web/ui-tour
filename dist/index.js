@@ -1,4 +1,5 @@
 import { createPopper } from '@popperjs/core';
+import { createNanoEvents } from 'nanoevents';
 import { BoxOverlay } from '@spb-web/box-overlay';
 
 /*! *****************************************************************************
@@ -26,8 +27,9 @@ function __awaiter(thisArg, _arguments, P, generator) {
     });
 }
 
+const stopedEventName = 'stoped';
 class UiTour {
-    constructor({ render = () => { }, popperOptions = {}, onStop = () => { }, steps = [], } = {}) {
+    constructor({ render = () => { }, popperOptions = {}, steps = [], } = {}) {
         this.box = new BoxOverlay();
         this.steps = [];
         this.currentStepIndex = 0;
@@ -38,7 +40,7 @@ class UiTour {
         this.goToStepPromise = Promise.resolve();
         this.started = false;
         this.render = () => { };
-        this.handleStop = () => { };
+        this.emitter = createNanoEvents();
         this.handleUpdateRect = () => {
             const { popperInstance } = this;
             if (!popperInstance) {
@@ -51,7 +53,6 @@ class UiTour {
         this.box.on('updateRect', this.handleUpdateRect);
         this.setRender(render);
         this.setPopperOptions(popperOptions);
-        this.onStop(onStop);
         steps.forEach(step => this.add(step));
     }
     isStarted() {
@@ -76,9 +77,6 @@ class UiTour {
             popperInstance.setOptions(options);
             popperInstance.forceUpdate();
         }
-    }
-    onStop(callback) {
-        this.onStop = callback;
     }
     start(stepIndex = 0) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -121,13 +119,16 @@ class UiTour {
             this.stopNow();
         });
     }
+    on(event, callback) {
+        return this.emitter.on(event, callback);
+    }
     stopNow() {
         this.started = false;
         this.popperElement.innerHTML = '';
         this.removePopper();
         this.box.stop();
         this.box.clear();
-        this.handleStop();
+        this.emitter.emit(stopedEventName);
     }
     appendPopper() {
         const { overlay } = this.box;
