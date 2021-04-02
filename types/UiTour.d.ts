@@ -1,8 +1,8 @@
 import { Instance as PopperInstance } from '@popperjs/core';
 import { BoxOverlay } from '@spb-web/box-overlay';
-declare const stopedEventName = "stoped";
+declare const stoppedEventName = "stopped";
 interface Events {
-    [stopedEventName]: () => void;
+    [stoppedEventName]: () => void;
 }
 import { TourPopperRender, TourStep, UiTourConstructorOptions } from './types';
 export declare class UiTour {
@@ -18,6 +18,7 @@ export declare class UiTour {
     private render;
     private emitter;
     constructor({ render, popperOptions, steps, }?: UiTourConstructorOptions);
+    getPopoverElement(): HTMLDivElement;
     isStarted(): boolean;
     add<T>(step: TourStep<T>): void;
     remove(step: TourStep<any>): void;

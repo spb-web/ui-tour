@@ -27,7 +27,7 @@ function __awaiter(thisArg, _arguments, P, generator) {
     });
 }
 
-const stopedEventName = 'stoped';
+const stoppedEventName = 'stopped';
 class UiTour {
     constructor({ render = () => { }, popperOptions = {}, steps = [], } = {}) {
         this.box = new BoxOverlay();
@@ -54,6 +54,9 @@ class UiTour {
         this.setRender(render);
         this.setPopperOptions(popperOptions);
         steps.forEach(step => this.add(step));
+    }
+    getPopoverElement() {
+        return this.popperElement;
     }
     isStarted() {
         return this.started;
@@ -102,7 +105,7 @@ class UiTour {
     stop() {
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.isStarted()) {
-                console.warn('[UiTour]: tour already stoped');
+                console.warn('[UiTour]: tour already stopped');
                 return;
             }
             const { popperInstance: popper, currentStepIndex } = this;
@@ -128,7 +131,7 @@ class UiTour {
         this.removePopper();
         this.box.stop();
         this.box.clear();
-        this.emitter.emit(stopedEventName);
+        this.emitter.emit(stoppedEventName);
     }
     appendPopper() {
         const { overlay } = this.box;

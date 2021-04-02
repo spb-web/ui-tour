@@ -5,10 +5,10 @@ import {
 import { createNanoEvents } from 'nanoevents'
 import { BoxOverlay } from '@spb-web/box-overlay'
 
-const stopedEventName = 'stoped'
+const stoppedEventName = 'stopped'
 
 interface Events {
-  [stopedEventName]: () => void
+  [stoppedEventName]: () => void
 }
 
 import {
@@ -42,6 +42,10 @@ export class UiTour {
     this.setPopperOptions(popperOptions)
 
     steps.forEach(step => this.add(step))
+  }
+
+  public getPopoverElement() {
+    return this.popperElement
   }
 
   public isStarted() {
@@ -105,7 +109,7 @@ export class UiTour {
 
   public async stop() {
     if (!this.isStarted()) {
-      console.warn('[UiTour]: tour already stoped')
+      console.warn('[UiTour]: tour already stopped')
       return
     }
 
@@ -145,7 +149,7 @@ export class UiTour {
     this.removePopper()
     this.box.stop()
     this.box.clear()
-    this.emitter.emit(stopedEventName)
+    this.emitter.emit(stoppedEventName)
   }
 
   private appendPopper() {
